@@ -25,9 +25,16 @@ resource "avi_ipamdnsproviderprofile" "avi_DNS" {
   type = "IPAMDNS_TYPE_INTERNAL_DNS"
   internal_profile {
     dns_service_domain {
-      domain_name = "tf-demo.homelab.virtualizestuff.com"
+      domain_name = var.avi_DNS_profile_domain_name
     }
   }
+}
+
+# Create Empty Avi Internal IPAM Profile
+resource "avi_ipamdnsproviderprofile" "avi_IPAM" {
+  name = var.avi_IPAM_profile_name
+  tenant_ref = var.tenant
+  type = "IPAMDNS_TYPE_INTERNAL"
 }
 
 # Create NSX-T Cloud
@@ -38,7 +45,7 @@ resource "avi_cloud" "nsxt_cloud" {
     dhcp_enabled = true
     obj_name_prefix = var.nsxt_cloud_prefix
     dns_provider_ref = avi_ipamdnsproviderprofile.avi_DNS.id
-    ipam_provider_ref = data.avi_ipamdnsproviderprofile.nsxtcloud_ipamdnsproviderprofile.id
+    ipam_provider_ref = avi_ipamdnsproviderprofile.avi_IPAM.id
     nsxt_configuration {
         nsxt_credentials_ref = avi_cloudconnectoruser.nsxt_cred.uuid
         nsxt_url = var.nsxt_cloud_url
@@ -80,6 +87,18 @@ resource "avi_vcenterserver" "vcenter_server" {
 resource "time_sleep" "wait_20_seconds" {
   depends_on = [avi_cloud.nsxt_cloud, avi_vcenterserver.vcenter_server]
   create_duration = "20s"
+}
+
+# Modify Avi Internal IPAM Profile to add network
+resource "avi_ipamdnsproviderprofile" "avi_IPAM1" {
+  name = var.avi_IPAM_profile_name
+  tenant_ref = var.tenant
+  type = "IPAMDNS_TYPE_INTERNAL"
+  internal_profile {
+    usable_networks {
+      nw_ref = data.avi_network.avi_vip.id
+    }
+  }
 }
 
 # Create IP Pool for Avi VIP Network
@@ -124,17 +143,28 @@ resource "avi_network" "avi_vip_network" {
     }
   }
 
-# Create Avi Internal IPAM Profile referencing the above network
-resource "avi_ipamdnsproviderprofile" "avi_IPAM" {
-  name = var.avi_IPAM_profile_name
-  tenant_ref = var.tenant
-  type = "IPAMDNS_TYPE_INTERNAL"
-  depends_on = [data.avi_network.avi_vip]
-  internal_profile {
-    usable_networks {
-      nw_ref = data.avi_network.avi_vip.id
+# Create Default Static Route for VIP Network
+resource "avi_vrfcontext" "default_static_route" {
+  name = var.nsxt_cloud_lr1
+  cloud_ref = avi_cloud.nsxt_cloud.id
+  static_routes {
+    prefix {
+      ip_addr {
+        addr = var.nsxt_cloud_vip_static_route_gateway_subnet
+        type = "V4"      
+      }
+      mask = var.nsxt_cloud_vip_static_route_gateway_subnet_mask
     }
+    next_hop {
+      addr = var.nsxt_cloud_vip_static_route_next_hop
+      type = "V4"      
+    }
+    route_id = "1"
   }
+  attrs {
+      key = "tier1path"
+      value = "/infra/tier-1s/${var.nsxt_cloud_lr1}"
+    }
 }
 
 # Create VIP for DNS VS
@@ -162,8 +192,21 @@ resource "avi_virtualservice" "dns" {
   vsvip_ref = avi_vsvip.dns_vip.id
   cloud_ref = avi_cloud.nsxt_cloud.id
   application_profile_ref = data.avi_applicationprofile.system_dns.id
-  depends_on = [avi_vsvip.dns_vip]
   services {
     port = var.vs_port
   }
+}
+
+# Set the above DNS VS as DNS Virtual Service
+resource "avi_systemconfiguration" "system_dns_vs" {
+  # Have to add DNS_Configuration otherwise the DNS information will get wiped if using just dns_virtualservice_refs only
+  dns_configuration {
+    server_list {
+      addr = var.avi_sys_DNS_configuration_DNS_server
+      type = "V4" 
+    }
+    search_domain = var.avi_sys_DNS_configuration_DNS_search_domain
+  }
+  dns_virtualservice_refs = [avi_virtualservice.dns.id]
+  default_license_tier = var.avi_sys_configuration_default_license_tier
 }

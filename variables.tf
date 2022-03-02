@@ -22,6 +22,15 @@ variable "avi_DNS_profile_name" {
 variable "avi_DNS_profile_domain_name" {
   type    = string
 }
+variable "avi_sys_DNS_configuration_DNS_server" {
+  type    = string
+}
+variable "avi_sys_DNS_configuration_DNS_search_domain" {
+  type    = string
+}
+variable "avi_sys_configuration_default_license_tier" {
+  type    = string
+}
 variable "avi_IPAM_profile_name" {
   type    = string
 }
@@ -98,6 +107,15 @@ variable "nsxt_cloud_vip_subnet_pool_begin" {
   type    = string
 }
 variable "nsxt_cloud_vip_subnet_pool_end" {
+  type    = string
+}
+variable "nsxt_cloud_vip_static_route_gateway_subnet" {
+  type    = string
+}
+variable "nsxt_cloud_vip_static_route_gateway_subnet_mask" {
+  type    = string
+}
+variable "nsxt_cloud_vip_static_route_next_hop" {
   type    = string
 }
 variable "vs_name" {
