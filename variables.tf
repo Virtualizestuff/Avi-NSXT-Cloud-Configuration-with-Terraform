@@ -19,6 +19,9 @@ variable "cloud_name" {
 variable "avi_DNS_profile_name" {
   type    = string
 }
+variable "avi_DNS_profile_domain_name" {
+  type    = string
+}
 variable "avi_IPAM_profile_name" {
   type    = string
 }
@@ -97,7 +100,6 @@ variable "nsxt_cloud_vip_subnet_pool_begin" {
 variable "nsxt_cloud_vip_subnet_pool_end" {
   type    = string
 }
-
 variable "vs_name" {
   type    = string
 }
