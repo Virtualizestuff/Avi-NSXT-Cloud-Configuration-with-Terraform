@@ -22,15 +22,6 @@ variable "avi_DNS_profile_name" {
 variable "avi_DNS_profile_domain_name" {
   type    = string
 }
-variable "avi_sys_DNS_configuration_DNS_server" {
-  type    = string
-}
-variable "avi_sys_DNS_configuration_DNS_search_domain" {
-  type    = string
-}
-variable "avi_sys_configuration_default_license_tier" {
-  type    = string
-}
 variable "avi_IPAM_profile_name" {
   type    = string
 }
