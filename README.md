@@ -1,5 +1,5 @@
 # AVI NSX-T Cloud Deployment with Terraform
-Want to automate the configuration of Avi's NSX-T Cloud Connector? This repo contains TF files that will configure Avi's **NSX-T Cloud including: IPAM & DNS Profiles, IP Pool, Static Route, set DNS Service and deploying a DNS virtual service.** From a topology perspective the SE management nic is placed on a NSX-T VLAN backed segment called "mgmt-vlan50" while the SE data nic is placed on a NSX-T Overlay segment called "Avi-VIP".
+Want to automate the configuration of Avi's NSX-T Cloud Connector? This repo contains TF files that will configure Avi's **NSX-T Cloud including: IPAM & DNS Profiles, IP Pool, Static Route, and deploying a DNS virtual service.** From a topology perspective the SE management nic is placed on a NSX-T VLAN backed segment called "mgmt-vlan50" while the SE data nic is placed on a NSX-T Overlay segment called "Avi-VIP".
 
 # Topology
 Below is the topology. Terraform will provision/configure all Avi objects within the Avi configuration box.
@@ -38,10 +38,7 @@ avi_version = "21.1.3"
 tenant = "admin"
 cloud_name = "nsxtcloud"
 avi_DNS_profile_name = "nsxt-cloud-DNS"
-avi_DNS_profile_domain_name = "tf-demo.homelab.virtualizestuff.com"
-avi_sys_DNS_configuration_DNS_server = "192.168.50.3"
-avi_sys_DNS_configuration_DNS_search_domain = "homelab.virtualizestuff.com"
-avi_sys_configuration_default_license_tier = "ENTERPRISE"
+avi_DNS_profile_domain_name = "tfdemo.homelab.virtualizestuff.com"
 avi_IPAM_profile_name = "nsxt-cloud-IPAM"
 data_avi_network_avi_vip_name = "Avi-VIP"
 data_avi_applicationprofile_system_dns_name = "System-DNS"

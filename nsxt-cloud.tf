@@ -85,7 +85,7 @@ resource "avi_vcenterserver" "vcenter_server" {
 # This allows enough time to pass in order to do a data.avi_network.avi_vip collection.
 # data.avi_network.avi_vip is depends_on the time_sleep.wait_20_seconds
 resource "time_sleep" "wait_20_seconds" {
-  depends_on = [avi_cloud.nsxt_cloud, avi_vcenterserver.vcenter_server]
+  depends_on = [avi_cloud.nsxt_cloud]
   create_duration = "20s"
 }
 
@@ -162,9 +162,9 @@ resource "avi_vrfcontext" "default_static_route" {
     route_id = "1"
   }
   attrs {
-      key = "tier1path"
-      value = "/infra/tier-1s/${var.nsxt_cloud_lr1}"
-    }
+    key = "tier1path"
+    value = "/infra/tier-1s/${var.nsxt_cloud_lr1}"
+  }
 }
 
 # Create VIP for DNS VS
@@ -181,7 +181,7 @@ resource "avi_vsvip" "dns_vip" {
   tier1_lr = var.nsxt_cloud_lr1
   cloud_ref = avi_cloud.nsxt_cloud.id
   tenant_ref = var.tenant
-  depends_on = [avi_network.avi_vip_network]
+  vrf_context_ref = data.avi_network.avi_vip.vrf_context_ref
 }
 
 # Create an Avi DNS Virtual Service
@@ -192,21 +192,8 @@ resource "avi_virtualservice" "dns" {
   vsvip_ref = avi_vsvip.dns_vip.id
   cloud_ref = avi_cloud.nsxt_cloud.id
   application_profile_ref = data.avi_applicationprofile.system_dns.id
+  vrf_context_ref = data.avi_network.avi_vip.vrf_context_ref
   services {
     port = var.vs_port
-  }
-}
-
-# Set the above DNS VS as DNS Virtual Service
-resource "avi_systemconfiguration" "system_dns_vs" {
-  # Have to add DNS_Configuration otherwise the DNS information will get wiped if using just dns_virtualservice_refs only
-  dns_configuration {
-    server_list {
-      addr = var.avi_sys_DNS_configuration_DNS_server
-      type = "V4" 
-    }
-    search_domain = var.avi_sys_DNS_configuration_DNS_search_domain
-  }
-  dns_virtualservice_refs = [avi_virtualservice.dns.id]
-  default_license_tier = var.avi_sys_configuration_default_license_tier
+  } 
 }
